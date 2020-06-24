@@ -70,18 +70,16 @@ services:
       SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8091"
   
   
-  schema-registry2:
+  schema-registry-target:
     image: confluentinc/cp-schema-registry:5.5.0
-    hostname: schema-registry2
-    container_name: schema-registry2
+    hostname: schema-registry-target
+    container_name: schema-registry-target
     depends_on:
-      - kafka-source
       - kafka-target
-      - schema-registry-source
     ports:
       - "8092:8092"
     environment:
-      SCHEMA_REGISTRY_HOST_NAME: schema-registry2
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry-target
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-target:19092
       SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8092"
   
