@@ -1,0 +1,22 @@
+{
+  "name": "replicate-with-schema",
+  "config": {
+    "connector.class": "io.confluent.connect.replicator.ReplicatorSourceConnector",
+    "topic.regex": "schema\\..*",
+    "topic.rename.format": "${topic}.replica",
+    "key.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "value.converter.schema.registry.url": "http://schema-registry-target:8092",
+    "value.converter.schemas.enable": "true", 
+    "src.value.converter": "io.confluent.connect.avro.AvroConverter",
+    "src.value.converter.schema.registry.url": "http://schema-registry-source:8091",
+    "src.value.converter.schemas.enable": "true",
+    "dest.kafka.bootstrap.servers": "kafka-target:19092",
+    "dest.kafka.replication.factor": 1,
+    "src.kafka.bootstrap.servers": "kafka-source:19091",
+    "src.consumer.group.id": "connect-replicator",
+    "tasks.max": "1",
+    "confluent.topic.replication.factor": "1",
+    "confluent.topic.bootstrap.servers": "kafka-target:19092"
+  }
+}
