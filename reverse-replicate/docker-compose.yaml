@@ -1,0 +1,130 @@
+---
+version: '3.4'
+services:
+  zookeeper:
+    image: ${REPOSITORY}/cp-zookeeper:${TAG}
+    hostname: zookeeper
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: "2000"
+      ZOOKEEPER_SERVERS: zookeeper1:2888:3888
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: localhost
+  
+  kafka-source:
+    image: ${REPOSITORY}/cp-enterprise-kafka:${TAG}
+    hostname: kafka-source
+    container_name: kafka-source
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181/kafka-source
+      KAFKA_LISTENERS: PLAINTEXT://kafka-source:19091, EXTERNAL://kafka-source:9091
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-source:19091, EXTERNAL://localhost:9091
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: kafka-source
+      KAFKA_BROKER_RACK: 0
+    ports:
+      - 9091:9091
+  
+  kafka-target:
+    image: ${REPOSITORY}/cp-enterprise-kafka:${TAG}
+    hostname: kafka-target
+    container_name: kafka-target
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181/kafka-target
+      KAFKA_LISTENERS: PLAINTEXT://kafka-target:19092, EXTERNAL://kafka-target:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-target:19092, EXTERNAL://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: kafka-target
+      KAFKA_BROKER_RACK: 0
+    ports:
+      - 9092:9092
+  
+  schema-registry-source:
+    image: ${REPOSITORY}/cp-schema-registry:${TAG}
+    hostname: schema-registry-source
+    container_name: schema-registry-source
+    depends_on:
+      - kafka-source
+      - kafka-target
+      
+    ports:
+      - "8091:8091"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry-source
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-source:19091
+      SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8091"
+  
+  
+  schema-registry-target:
+    image: ${REPOSITORY}/cp-schema-registry:${TAG}
+    hostname: schema-registry-target
+    container_name: schema-registry-target
+    depends_on:
+      - kafka-target
+    ports:
+      - "8092:8092"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry-target
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-target:19092
+      SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8092"
+
+  connect:
+    image: ${REPOSITORY}/cp-server-connect:${TAG}
+    container_name: connect
+    restart: always
+    ports:
+      - "8083:8083"
+    depends_on:
+      - zookeeper
+      - kafka-source
+      - schema-registry-source
+    volumes:
+      - mi3:/usr/share/replicator/kafka-connect-replicator/
+    environment:
+      CLASSPATH: /usr/share/replicator/kafka-connect-replicator/replicator-rest-extension-${TAG}.jar
+      CONNECT_BOOTSTRAP_SERVERS: "kafka-source:19091"
+      CONNECT_REST_PORT: 8083
+      CONNECT_LISTENERS: "http://0.0.0.0:8083"
+      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: connect-statuses
+      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
+      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_GROUP_ID: "connect"
+      CONNECT_LOG4J_ROOT_LOGLEVEL: INFO
+      CONNECT_REST_ADVERTISED_HOST_NAME: "connect"
+      CONNECT_PLUGIN_PATH: "/usr/share/replicator"
+      CONNECT_REPLICATION_FACTOR: 1
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_REST_EXTENSION_CLASSES: io.confluent.connect.replicator.monitoring.ReplicatorMonitoringExtension
+      CONNECT_CONNECTOR_CLIENT_CONFIG_OVERRIDE_POLICY: All
+
+  replicator-for-jar-transfer:
+    image: ${REPOSITORY}/cp-enterprise-replicator:${TAG}
+    hostname: replicator-for-jar-transfer
+    container_name: replicator-for-jar-transfer
+    volumes:
+      - mi3:/usr/share/java/kafka-connect-replicator/
+    command: "sleep infinity" 
+
+volumes:
+  mi3: {}
