@@ -1,0 +1,27 @@
+{
+  "name": "replicate-without-schema",
+  "config": {
+    "connector.class": "io.confluent.connect.replicator.ReplicatorSourceConnector",
+    "topic.regex": "noschema\\..*",
+    "topic.rename.format": "${topic}.replica",
+    "key.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
+    "value.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
+    "dest.kafka.bootstrap.servers": "pkc-lq8gm.westeurope.azure.confluent.cloud:9092",
+    "dest.kafka.security.protocol": "SASL_SSL",
+    "dest.kafka.sasl.mechanism" : "PLAIN",
+    "dest.kafka.replication.factor": 3,
+    "dest.kafka.sasl.jaas.config" : "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"LBO34FRRM5GULNYA\" password=\"F07nXehc/xbl0wMbnqbC/7g8wkVoteCh9yeHlEBMEnn3S/aifI7wALrlwS3OTfRz\" ;",
+    "src.kafka.bootstrap.servers": "kafka:19091",
+    "src.kafka.security.protocol" : "PLAINTEXT",
+    "src.consumer.group.id": "connect-replicator",
+    "tasks.max": "1",
+    "confluent.topic.replication.factor": "1",
+    "confluent.topic.bootstrap.servers": "kafka:19091",
+    "confluent.topic.security.protocol": "PLAINTEXT",
+    "producer.override.bootstrap.servers": "pkc-lq8gm.westeurope.azure.confluent.cloud:9092",
+    "producer.override.security.protocol": "SASL_SSL",
+    "producer.override.sasl.mechanism" : "PLAIN",
+    "producer.override.ssl.endpoint.identification.algorithm": "https",
+    "producer.override.sasl.jaas.config" : "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"LBO34FRRM5GULNYA\" password=\"F07nXehc/xbl0wMbnqbC/7g8wkVoteCh9yeHlEBMEnn3S/aifI7wALrlwS3OTfRz\" ;"
+  }
+}
