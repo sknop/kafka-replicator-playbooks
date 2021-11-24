@@ -14,7 +14,7 @@ services:
       KAFKA_JMX_HOSTNAME: localhost
   
   kafka-source:
-    image: ${REPOSITORY}/cp-enterprise-kafka:5.3.1
+    image: ${REPOSITORY}/cp-enterprise-kafka:${TAG}
     hostname: kafka-source
     container_name: kafka-source
     depends_on:
@@ -55,7 +55,7 @@ services:
       - 9092:9092
   
   schema-registry-source:
-    image: ${REPOSITORY}/cp-schema-registry:5.3.1
+    image: ${REPOSITORY}/cp-schema-registry:${TAG}
     hostname: schema-registry-source
     container_name: schema-registry-source
     depends_on:
@@ -84,7 +84,7 @@ services:
       SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8092"
 
   connect:
-    image: ${REPOSITORY}/cp-server-connect:5.3.1
+    image: ${REPOSITORY}/cp-enterprise-replicator:${TAG}
     container_name: connect
     restart: always
     ports:
@@ -93,10 +93,8 @@ services:
       - zookeeper
       - kafka-source
       - schema-registry-source
-    volumes:
-      - mi3:/usr/share/replicator/kafka-connect-replicator/
     environment:
-      CLASSPATH: /usr/share/replicator/kafka-connect-replicator/replicator-rest-extension-${TAG}.jar
+      CLASSPATH: /usr/share/java/kafka-connect-replicator/*
       CONNECT_BOOTSTRAP_SERVERS: "kafka-source:19091"
       CONNECT_REST_PORT: 8083
       CONNECT_LISTENERS: "http://0.0.0.0:8083"
@@ -105,25 +103,13 @@ services:
       CONNECT_STATUS_STORAGE_TOPIC: connect-statuses
       CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
       CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-      CONNECT_GROUP_ID: "connect"
+      CONNECT_GROUP_ID: connect
       CONNECT_LOG4J_ROOT_LOGLEVEL: INFO
-      CONNECT_REST_ADVERTISED_HOST_NAME: "connect"
-      CONNECT_PLUGIN_PATH: "/usr/share/replicator"
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+      CONNECT_PLUGIN_PATH: /usr/share/java/kafka-connect-replicator
       CONNECT_REPLICATION_FACTOR: 1
       CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
       CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
       CONNECT_CONNECTOR_CLIENT_CONFIG_OVERRIDE_POLICY: All
 
-  replicator-for-jar-transfer:
-    image: ${REPOSITORY}/cp-enterprise-replicator:5.3.1
-    hostname: replicator-for-jar-transfer
-    container_name: replicator-for-jar-transfer
-    volumes:
-      - mi3:/usr/share/java/kafka-connect-replicator/
-    command: "sleep infinity" 
-
-volumes:
-  mi3: {}

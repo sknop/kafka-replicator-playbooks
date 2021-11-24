@@ -1,17 +1,13 @@
 #!/usr/bin/env bash
 
-# fire up the docker environment
+source ../shared/functions.sh
 
+# fire up the docker environment
 docker-compose up -d
 
-docker-compose logs connect | grep "Kafka Connect started"
-while (( $? == 1 ))
-do
-    sleep 1
-    echo "Waiting for connect to be started ..."
-    docker-compose logs connect | grep "Kafka Connect started"
-done
+wait_for_connect
 
-curl  -X POST -H "Content-Type: application/json" --data @replicator-noschema.json http://localhost:8083/connectors
-curl  -X POST -H "Content-Type: application/json" --data @replicator-schema.json http://localhost:8083/connectors
+#start connectors
+curl -X POST -H "Content-Type: application/json" --data "$(./format_template.py replicator-noschema.json)" http://localhost:8083/connectors
+curl -X POST -H "Content-Type: application/json" --data "$(./format_template.py replicator-schema.json)" http://localhost:8083/connectors
 

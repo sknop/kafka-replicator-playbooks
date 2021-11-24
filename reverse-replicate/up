@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 
-# fire up the docker environment
+source ../shared/functions.sh
 
+# fire up the docker environment
 docker-compose up -d
 
-docker-compose logs connect | grep "Kafka Connect started"
-while (( $? == 1 ))
-do
-    sleep 1
-    echo "Waiting for connect to be started ..."
-    docker-compose logs connect | grep "Kafka Connect started"
-done
+wait_for_connect
 
-curl  -X POST -H "Content-Type: application/json" --data @replicator.json http://localhost:8083/connectors
+# produce data to source cluster:
+VALUE_SCHEMA='{"type": "record","name": "User", "fields": [{"name": "email", "type": "string" },{"name": "id", "type": "int" }]}'
+docker compose exec schema-registry-source echo '{"email":"paul@a.com", "id": 42}' | kafka-avro-console-producer --topic schema.test --bootstrap-server localhost:9091 --property schema.registry.url=http://localhost:8091 --property value.schema="$VALUE_SCHEMA"
+
+curl -X POST -H "Content-Type: application/json" --data @replicator.json http://localhost:8083/connectors
 
