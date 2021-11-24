@@ -1,3 +1,4 @@
 # Example on how to connect a docker image to the Confluent Cloud
 
-Need to replace the place holders with the correct URLs, username and secret.
+Example for setting up replicator backed by a local (Docker compose) based Kafka cluster and replicating from the local cluster to Confluent Cloud.
+
