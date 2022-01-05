@@ -1,0 +1,26 @@
+{
+  "name": "replicate-with-schema",
+  "config": {
+    "connector.class": "io.confluent.connect.replicator.ReplicatorSourceConnector",
+    "topic.regex": "schema\\..*",
+    "topic.rename.format": "${topic}.replica",
+    "key.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
+    "value.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
+    "src.key.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
+    "src.value.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
+    "dest.kafka.bootstrap.servers": "kafka-target:19092",
+    "dest.topic.replication.factor": 1,
+    "src.kafka.bootstrap.servers": "kafka-source:19091",
+    "src.consumer.group.id": "connect-replicator",
+    "tasks.max": "1",
+    "confluent.topic.replication.factor": "1",
+    "confluent.topic.bootstrap.servers": "kafka-target:19092",
+    "__comment": "Setup the SMT",
+    "transforms": "AvroSchemaTransfer",
+
+    "transforms.AvroSchemaTransfer.type": "cricket.jmoore.kafka.connect.transforms.SchemaRegistryTransfer",
+    "transforms.AvroSchemaTransfer.src.schema.registry.url": "http://schema-registry-source:8091",
+    "transforms.AvroSchemaTransfer.dest.schema.registry.url": "http://schema-registry-target:8092",
+    "transforms.AvroSchemaTransfer.transfer.message.keys":"true"
+  }
+}
